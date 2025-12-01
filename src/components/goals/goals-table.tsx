@@ -61,9 +61,14 @@ export const columns: ColumnDef<Goal>[] = [
   {
     accessorKey: 'student',
     header: '受講生',
+    enableSorting: false,
     cell: ({ row }) => {
       const student = row.original.student
-      if (!student) return <div className="text-gray-400">不明</div>
+
+      if (!student) {
+        return <div className="text-gray-400">不明</div>
+      }
+
       return (
         <div>
           <div className="font-medium">{student.real_name || student.name}</div>
@@ -79,6 +84,7 @@ export const columns: ColumnDef<Goal>[] = [
   {
     accessorKey: 'goal_type',
     header: 'タイプ',
+    enableSorting: true,
     cell: ({ row }) => {
       const goalType = row.original.goal_type as 'medium' | 'small' | null
       if (!goalType) return <span className="text-gray-400">-</span>
@@ -92,6 +98,7 @@ export const columns: ColumnDef<Goal>[] = [
   {
     accessorKey: 'title',
     header: '目標',
+    enableSorting: true,
     cell: ({ row }) => {
       const parentGoal = row.original.parent_goal
       const isSmallGoal = row.original.goal_type === 'small' && parentGoal
@@ -119,7 +126,14 @@ export const columns: ColumnDef<Goal>[] = [
     accessorKey: 'target_date',
     header: '目標日',
     cell: ({ row }) => {
-      return format(new Date(row.getValue('target_date')), 'PPP', { locale: ja })
+      const targetDate = row.getValue('target_date') as string
+      if (!targetDate) return <span className="text-gray-400">未設定</span>
+      try {
+        return format(new Date(targetDate), 'PPP', { locale: ja })
+      } catch (error) {
+        console.error('Date format error:', error, targetDate)
+        return <span className="text-gray-400">日付エラー</span>
+      }
     },
   },
   {
@@ -192,6 +206,14 @@ interface GoalsTableProps {
 }
 
 export function GoalsTable({ data }: GoalsTableProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="rounded-md border p-8 text-center">
+        <p className="text-muted-foreground">目標データがありません</p>
+      </div>
+    )
+  }
+
   return (
     <DataTable
       columns={columns}

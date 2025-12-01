@@ -7,20 +7,52 @@ import { GoalsTable } from '@/components/goals/goals-table'
 export default async function GoalsPage() {
   const supabase = await createClient()
 
-  // Get goals with student and parent goal info
-  const { data: goals, error } = await supabase
+  // Get all goals
+  const { data: goals, error: goalsError } = await supabase
     .from('goals')
-    .select(`
-      *,
-      student:students(name, real_name),
-      parent_goal:goals!goals_parent_goal_id_fkey(title)
-    `)
+    .select('*')
     .order('goal_type', { ascending: false })
     .order('created_at', { ascending: false })
 
-  if (error) {
-    console.error('Error fetching goals:', error)
+  if (goalsError) {
+    console.error('Error fetching goals:', goalsError)
   }
+
+  // Get all students
+  const { data: students, error: studentsError } = await supabase
+    .from('students')
+    .select('id, name, real_name')
+
+  // Manually join data
+  const displayGoals = goals?.map(goal => {
+    const student = students?.find(s => s.id === goal.student_id)
+    const parentGoal = goals?.find(g => g.id === goal.parent_goal_id)
+
+    return {
+      ...goal,
+      student: student ? { name: student.name, real_name: student.real_name } : null,
+      parent_goal: parentGoal ? { title: parentGoal.title } : null
+    }
+  }) || []
+
+  // Sort by student name, then by goal type (medium first, then small)
+  displayGoals.sort((a, b) => {
+    // Primary sort: by student name
+    const studentA = a.student?.real_name || a.student?.name || ''
+    const studentB = b.student?.real_name || b.student?.name || ''
+    const studentCompare = studentA.localeCompare(studentB, 'ja')
+
+    if (studentCompare !== 0) {
+      return studentCompare
+    }
+
+    // Secondary sort: by goal type (medium before small)
+    const goalTypeOrder = { medium: 0, small: 1 }
+    const typeA = goalTypeOrder[a.goal_type as 'medium' | 'small'] ?? 2
+    const typeB = goalTypeOrder[b.goal_type as 'medium' | 'small'] ?? 2
+
+    return typeA - typeB
+  })
 
   return (
     <div className="space-y-6">
@@ -30,7 +62,7 @@ export default async function GoalsPage() {
             目標管理
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            受講生の学習目標の一覧・設定（{goals?.length || 0}件）
+            受講生の学習目標の一覧・設定（{displayGoals?.length || 0}件）
           </p>
         </div>
         <div className="flex gap-3">
@@ -55,7 +87,7 @@ export default async function GoalsPage() {
         </div>
       </div>
 
-      <GoalsTable data={goals || []} />
+      <GoalsTable data={displayGoals} />
     </div>
   )
 }

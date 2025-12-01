@@ -12,6 +12,7 @@ import {
   FileText,
   Settings,
   Tag,
+  Calendar,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -23,6 +24,7 @@ const navigation = [
   { name: '受講生管理', href: '/dashboard/students', icon: Users, adminOnly: false },
   { name: '面談記録', href: '/dashboard/interviews', icon: MessageSquare, adminOnly: false },
   { name: '目標管理', href: '/dashboard/goals', icon: Target, adminOnly: false },
+  { name: '目標カレンダー', href: '/dashboard/goals/calendar', icon: Calendar, adminOnly: false },
   { name: 'レポート', href: '/dashboard/reports', icon: FileText, adminOnly: false },
   { name: 'コース管理', href: '/dashboard/courses', icon: BookOpen, adminOnly: true },
   { name: 'タグ管理', href: '/dashboard/tags', icon: Tag, adminOnly: true },
