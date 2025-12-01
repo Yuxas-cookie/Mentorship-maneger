@@ -453,9 +453,11 @@ export default async function StudentDetailPage({
                             {mediumGoal.description}
                           </p>
                         )}
-                        <p className="text-xs text-muted-foreground ml-2">
-                          目標日: {format(new Date(mediumGoal.target_date), 'PPP', { locale: ja })}
-                        </p>
+                        {mediumGoal.target_date && (
+                          <p className="text-xs text-muted-foreground ml-2">
+                            目標日: {format(new Date(mediumGoal.target_date), 'PPP', { locale: ja })}
+                          </p>
+                        )}
 
                         {/* 小目標（中目標に紐づく） */}
                         {relatedSmallGoals.length > 0 && (

@@ -8,7 +8,7 @@ export default async function StudentsPage() {
   const supabase = await createClient()
 
   // Get students with course and instructor info
-  const { data: students, error } = await supabase
+  const { data: rawStudents, error } = await supabase
     .from('students')
     .select(`
       *,
@@ -20,6 +20,21 @@ export default async function StudentsPage() {
   if (error) {
     console.error('Error fetching students:', error)
   }
+
+  // Filter valid students with proper types
+  const students = rawStudents?.filter((student): student is typeof student & {
+    status: 'active' | 'on_leave' | 'graduated' | 'withdrawn';
+    created_at: string;
+  } => {
+    return (
+      student.status !== null &&
+      (student.status === 'active' ||
+       student.status === 'on_leave' ||
+       student.status === 'graduated' ||
+       student.status === 'withdrawn') &&
+      student.created_at !== null
+    )
+  }) || []
 
   return (
     <div className="space-y-6">
@@ -40,7 +55,7 @@ export default async function StudentsPage() {
         </Link>
       </div>
 
-      <StudentsTable data={students || []} />
+      <StudentsTable data={students} />
     </div>
   )
 }

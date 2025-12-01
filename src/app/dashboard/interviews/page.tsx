@@ -8,7 +8,7 @@ export default async function InterviewsPage() {
   const supabase = await createClient()
 
   // Get interviews with student and interviewer info
-  const { data: interviews, error } = await supabase
+  const { data: rawInterviews, error } = await supabase
     .from('interviews')
     .select(`
       *,
@@ -20,6 +20,23 @@ export default async function InterviewsPage() {
   if (error) {
     console.error('Error fetching interviews:', error)
   }
+
+  // Filter valid interviews with proper types
+  const interviews = rawInterviews?.filter((interview): interview is typeof interview & {
+    interview_type: 'regular' | 'emergency' | 'career' | 'other';
+    summary: string;
+    created_at: string;
+  } => {
+    return (
+      interview.interview_type !== null &&
+      (interview.interview_type === 'regular' ||
+       interview.interview_type === 'emergency' ||
+       interview.interview_type === 'career' ||
+       interview.interview_type === 'other') &&
+      interview.summary !== null &&
+      interview.created_at !== null
+    )
+  }) || []
 
   return (
     <div className="space-y-6">
@@ -40,7 +57,7 @@ export default async function InterviewsPage() {
         </Link>
       </div>
 
-      <InterviewsTable data={interviews || []} />
+      <InterviewsTable data={interviews} />
     </div>
   )
 }

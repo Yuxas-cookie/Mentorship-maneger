@@ -19,7 +19,7 @@ export default async function GoalsCalendarPage() {
     .from('students')
     .select('id, name, real_name')
 
-  // Manually join data
+  // Manually join data and filter valid goals
   const goalsWithStudents = goals?.map(goal => {
     const student = students?.find(s => s.id === goal.student_id)
 
@@ -27,7 +27,22 @@ export default async function GoalsCalendarPage() {
       ...goal,
       student: student ? { name: student.name, real_name: student.real_name } : null,
     }
-  }) || []
+  })
+    .filter((goal): goal is typeof goal & {
+      target_date: string;
+      goal_type: 'medium' | 'small';
+      title: string;
+      status: string;
+      progress_percentage: number;
+    } => {
+      return (
+        goal.target_date !== null &&
+        goal.title !== null &&
+        (goal.goal_type === 'medium' || goal.goal_type === 'small') &&
+        goal.status !== null &&
+        goal.progress_percentage !== null
+      )
+    }) || []
 
   return (
     <div className="space-y-6">

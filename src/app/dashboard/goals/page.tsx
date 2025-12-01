@@ -23,7 +23,7 @@ export default async function GoalsPage() {
     .from('students')
     .select('id, name, real_name')
 
-  // Manually join data
+  // Manually join data and filter valid goals
   const displayGoals = goals?.map(goal => {
     const student = students?.find(s => s.id === goal.student_id)
     const parentGoal = goals?.find(g => g.id === goal.parent_goal_id)
@@ -33,7 +33,22 @@ export default async function GoalsPage() {
       student: student ? { name: student.name, real_name: student.real_name } : null,
       parent_goal: parentGoal ? { title: parentGoal.title } : null
     }
-  }) || []
+  })
+    .filter((goal): goal is typeof goal & {
+      target_date: string;
+      title: string;
+      status: 'not_started' | 'in_progress' | 'completed' | 'cancelled';
+      progress_percentage: number;
+      created_at: string;
+    } => {
+      return (
+        goal.target_date !== null &&
+        goal.title !== null &&
+        goal.status !== null &&
+        goal.progress_percentage !== null &&
+        goal.created_at !== null
+      )
+    }) || []
 
   // Sort by student name, then by goal type (medium first, then small)
   displayGoals.sort((a, b) => {
